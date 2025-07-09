@@ -62,7 +62,7 @@ DATABASES = {
         "NAME": "littlelemondb",  # Your MySQL database name
         "USER": "root",  # Using root (or 'newuser' if created)
         "PASSWORD": "Runningbulldog1$",  # Your MySQL password
-        "HOST": "192.168.18.86",  # Windows MySQL server IP
+        "HOST": "192.168.8.162",  # Windows MySQL server IP
         "PORT": "3306",  # Default MySQL port
         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }

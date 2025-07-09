@@ -163,19 +163,5 @@ python manage.py runserver
 python manage.py shell
 ```
 
-## 🧪 Testing
-
-```bash
-# Run tests
-python manage.py test
-
-# Run specific app tests
-python manage.py test LittleLemonApp
-
-# Coverage (if installed)
-coverage run manage.py test
-coverage report
-```
-
 
 Built with Django + MySQL

@@ -61,11 +61,6 @@ class BookingView(generics.ListCreateAPIView):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["date"]
 
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return []
-        return [IsAdminUser()]
-
 
 class SingleBookingView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Booking.objects.all()

@@ -1,7 +1,7 @@
+# LittleLemon/settings.py
 from pathlib import Path
 import os
 from datetime import timedelta
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -68,7 +68,6 @@ DATABASES = {
     }
 }
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -114,16 +113,22 @@ REST_FRAMEWORK = {
 
 DJOSER = {"USER_ID_FIELD": "username"}
 
+# Fixed JWT Settings
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(minutes=20),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "ROTATE_REFRESH_TOKENS": False,  # CHANGED: Disable rotation for now
+    "BLACKLIST_AFTER_ROTATION": False,  # CHANGED: Disable blacklisting
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
 }
 
+# Fixed CORS Settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React dev server
-    "http://127.0.0.1:5180",
+    "http://127.0.0.1:5183",  # Your actual frontend URL
+    "http://localhost:5183",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

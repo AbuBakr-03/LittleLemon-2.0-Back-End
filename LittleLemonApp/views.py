@@ -1,4 +1,4 @@
-# LittleLemonApp/views.py
+# LittleLemonApp/views.py - Debug Version
 from rest_framework import generics, permissions
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -11,12 +11,16 @@ from .serializers import (
     BookingSerializer,
     CategorySerializer,
     CustomTokenObtainPairSerializer,
+    CustomTokenRefreshSerializer,
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Your existing views...
@@ -77,54 +81,52 @@ class SingleBookingView(generics.RetrieveUpdateDestroyAPIView):
         return [IsAdminUser()]
 
 
-# Updated Authentication Views
+# Debug Authentication Views
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
-
         if response.status_code == 200:
             token = response.data
-
             # Create response with only access token (no refresh token in response body)
             response_data = {"access": token["access"], "role": token["role"]}
-
             # Set refresh token in HttpOnly cookie
             new_response = Response(response_data, status=status.HTTP_200_OK)
+            cookie_max_age = int(
+                settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds()
+            )
             new_response.set_cookie(
                 "refresh_token",
                 token["refresh"],
-                max_age=settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"].total_seconds(),
+                max_age=cookie_max_age,
                 httponly=True,
                 secure=not settings.DEBUG,  # Use secure cookies in production
                 samesite="Lax",
             )
-
             return new_response
+        else:
+            print(f"LOGIN: Failed with status {response.status_code}: {response.data}")
 
         return response
 
 
 class CustomTokenRefreshView(TokenRefreshView):
+    serializer_class = CustomTokenRefreshSerializer
+
     def post(self, request, *args, **kwargs):
         # Get refresh token from HttpOnly cookie
         refresh_token = request.COOKIES.get("refresh_token")
-
         if not refresh_token:
             return Response(
                 {"detail": "Refresh token not found in cookies"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-
         # Add refresh token to request data
         request.data["refresh"] = refresh_token
-
         response = super().post(request, *args, **kwargs)
-
         if response.status_code == 200:
             token_data = response.data
-
             # If rotation is enabled, we get a new refresh token
             if "refresh" in token_data:
                 # Update the refresh token cookie
@@ -140,15 +142,10 @@ class CustomTokenRefreshView(TokenRefreshView):
                 )
                 # Remove refresh token from response body
                 del token_data["refresh"]
-
-            # Add role to response
-            try:
-                refresh = RefreshToken(refresh_token)
-                user = refresh.user if hasattr(refresh, "user") else None
-                if user:
-                    token_data["role"] = "admin" if user.is_superuser else "user"
-            except:
-                pass
+        else:
+            print(
+                f"REFRESH: Failed with status {response.status_code}: {response.data}"
+            )
 
         return response
 

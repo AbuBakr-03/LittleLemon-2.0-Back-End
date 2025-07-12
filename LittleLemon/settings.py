@@ -62,7 +62,7 @@ DATABASES = {
         "NAME": "littlelemondb",  # Your MySQL database name
         "USER": "root",  # Using root (or 'newuser' if created)
         "PASSWORD": "Runningbulldog1$",  # Your MySQL password
-        "HOST": "192.168.8.162",  # Windows MySQL server IP
+        "HOST": "192.168.47.53",  # Windows MySQL server IP
         "PORT": "3306",  # Default MySQL port
         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }
@@ -115,15 +115,15 @@ REST_FRAMEWORK = {
 DJOSER = {"USER_ID_FIELD": "username"}
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=2),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=20),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 }
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React dev server
-    "http://127.0.0.1:5174",
+    "http://127.0.0.1:5179",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

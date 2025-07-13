@@ -48,7 +48,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class CustomTokenRefreshSerializer(TokenRefreshSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
-
         # Get the refresh token and extract user info
         refresh = RefreshToken(attrs["refresh"])
         user_id = refresh.payload.get("user_id")
@@ -60,9 +59,7 @@ class CustomTokenRefreshSerializer(TokenRefreshSerializer):
             try:
                 user = User.objects.get(id=user_id)
                 data["role"] = "admin" if user.is_superuser else "user"
-                print(
-                    f"Custom refresh serializer: User {user.username}, Role: {data['role']}"
-                )
+
             except User.DoesNotExist:
                 data["role"] = "user"
         else:

@@ -107,13 +107,11 @@ class CustomTokenObtainPairView(TokenObtainPairView):
             return new_response
         else:
             print(f"LOGIN: Failed with status {response.status_code}: {response.data}")
-
         return response
 
 
 class CustomTokenRefreshView(TokenRefreshView):
     serializer_class = CustomTokenRefreshSerializer
-
     def post(self, request, *args, **kwargs):
         # Get refresh token from HttpOnly cookie
         refresh_token = request.COOKIES.get("refresh_token")

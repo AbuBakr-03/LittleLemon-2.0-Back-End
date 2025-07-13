@@ -127,8 +127,8 @@ SIMPLE_JWT = {
 # Fixed CORS Settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # React dev server
-    "http://127.0.0.1:5183",  # Your actual frontend URL
-    "http://localhost:5183",
+    "http://127.0.0.1:5185",  # Your actual frontend URL
+    "http://localhost:5185",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

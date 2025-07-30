@@ -189,8 +189,8 @@ if CLOUDFLARE_R2_BUCKET:
 CORS_ALLOWED_ORIGINS = [
     "https://littlelemon.restaurant",
     "https://www.littlelemon.restaurant",
-    "http://127.0.0.1:5174",  # Your actual frontend URL
-    "http://localhost:5174",
+    "http://127.0.0.1:5175",  # Your actual frontend URL
+    "http://localhost:5175",
 ]
 
 CORS_ALLOW_CREDENTIALS = True

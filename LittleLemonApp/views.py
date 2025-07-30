@@ -101,8 +101,9 @@ class CustomTokenObtainPairView(TokenObtainPairView):
                 token["refresh"],
                 max_age=cookie_max_age,
                 httponly=True,
-                secure=not settings.DEBUG,  # Use secure cookies in production
-                samesite="Lax",
+                secure=True,  # Use secure cookies in production
+                samesite="None",
+                domain=None,
             )
             return new_response
         else:
@@ -112,6 +113,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class CustomTokenRefreshView(TokenRefreshView):
     serializer_class = CustomTokenRefreshSerializer
+
     def post(self, request, *args, **kwargs):
         # Get refresh token from HttpOnly cookie
         refresh_token = request.COOKIES.get("refresh_token")
@@ -135,8 +137,9 @@ class CustomTokenRefreshView(TokenRefreshView):
                         "REFRESH_TOKEN_LIFETIME"
                     ].total_seconds(),
                     httponly=True,
-                    secure=not settings.DEBUG,
-                    samesite="Lax",
+                    secure=True,
+                    samesite="None",
+                    domain=None,
                 )
                 # Remove refresh token from response body
                 del token_data["refresh"]

@@ -2,14 +2,33 @@
 from pathlib import Path
 import os
 from datetime import timedelta
+from decouple import config
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = "django-insecure-vssi0klcvwz=bv&n^l*hp5r736=04*&5rb-swnxp7ljx-cssta"
+SECRET_KEY = config("SECRET_KEY", cast=str, default="")
 
-DEBUG = True
+DEBUG = config("DEBUG", cast=bool, default=False)
 
-ALLOWED_HOSTS = []
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = "DENY"
+
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "*.railway.app",
+    "api.littlelemon.restaurant",
+]
+# Filter out empty hosts
+ALLOWED_HOSTS = [host for host in ALLOWED_HOSTS if host]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -29,6 +48,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # For static files
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -56,15 +76,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "LittleLemon.wsgi.application"
 
+# Add these at the top of your settings.py
+import os
+from dotenv import load_dotenv
+from urllib.parse import urlparse, parse_qsl
+
+load_dotenv()
+
+# Replace the DATABASES section of your settings.py with this
+tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "littlelemondb",  # Your MySQL database name
-        "USER": "root",  # Using root (or 'newuser' if created)
-        "PASSWORD": "Runningbulldog1$",  # Your MySQL password
-        "HOST": "192.168.47.53",  # Windows MySQL server IP
-        "PORT": "3306",  # Default MySQL port
-        "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": tmpPostgres.path.replace("/", ""),
+        "USER": tmpPostgres.username,
+        "PASSWORD": tmpPostgres.password,
+        "HOST": tmpPostgres.hostname,
+        "PORT": 5432,
+        "OPTIONS": dict(parse_qsl(tmpPostgres.query)),
     }
 }
 
@@ -92,10 +122,11 @@ USE_I18N = True
 USE_TZ = True
 
 MEDIA_URL = "/media/"
-
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -111,7 +142,7 @@ REST_FRAMEWORK = {
     ],
 }
 
-DJOSER = {"USER_ID_FIELD": "username"}
+DJOSER = {"USER_ID_FIELD": "username", "DOMAIN": "littlelemon.restaurant"}
 
 # Fixed JWT Settings
 SIMPLE_JWT = {
@@ -124,11 +155,90 @@ SIMPLE_JWT = {
     "SIGNING_KEY": SECRET_KEY,
 }
 
+# Cloudflare R2 Configuration
+CLOUDFLARE_R2_BUCKET = config("CLOUDFLARE_R2_BUCKET", cast=str, default="")
+CLOUDFLARE_R2_ACCESS_KEY = config("CLOUDFLARE_R2_ACCESS_KEY", cast=str, default="")
+CLOUDFLARE_R2_SECRET_KEY = config("CLOUDFLARE_R2_SECRET_KEY", cast=str, default="")
+CLOUDFLARE_R2_BUCKET_ENDPOINT = config(
+    "CLOUDFLARE_R2_BUCKET_ENDPOINT", cast=str, default=""
+)
+
+if CLOUDFLARE_R2_BUCKET:
+    CLOUDFLARE_R2_CONFIG_OPTIONS = {
+        "bucket_name": CLOUDFLARE_R2_BUCKET,
+        "access_key": CLOUDFLARE_R2_ACCESS_KEY,
+        "secret_key": CLOUDFLARE_R2_SECRET_KEY,
+        "endpoint_url": CLOUDFLARE_R2_BUCKET_ENDPOINT,
+        "default_acl": "public-read",
+        "signature_version": "s3v4",
+    }
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "helpers.cloudflare.storages.MediaFileStorage",
+            "OPTIONS": CLOUDFLARE_R2_CONFIG_OPTIONS,
+        },
+        "staticfiles": {
+            "BACKEND": "helpers.cloudflare.storages.StaticFileStorage",
+            "OPTIONS": CLOUDFLARE_R2_CONFIG_OPTIONS,
+        },
+    }
+
+
 # Fixed CORS Settings
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # React dev server
-    "http://127.0.0.1:5185",  # Your actual frontend URL
-    "http://localhost:5185",
+    "https://littlelemon.restaurant",
+    "https://www.littlelemon.restaurant",
+    "http://127.0.0.1:5174",  # Your actual frontend URL
+    "http://localhost:5174",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Add these for file uploads
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "APIBackend": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}

@@ -11,6 +11,10 @@ SECRET_KEY = config("SECRET_KEY", cast=str, default="")
 
 DEBUG = config("DEBUG", cast=bool, default=False)
 
+RAILWAY_ENVIRONMENT_NAME = os.getenv("RAILWAY_ENVIRONMENT_NAME")
+if RAILWAY_ENVIRONMENT_NAME:
+    DEBUG = False
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
@@ -25,6 +29,7 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "*.railway.app",
+    "*.up.railway.app",
     "api.littlelemon.restaurant",
 ]
 # Filter out empty hosts
@@ -43,6 +48,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "djoser",
     "django_filters",
+    "storages",  # Add this for S3/R2 storage
 ]
 
 MIDDLEWARE = [
